@@ -803,7 +803,7 @@ route('/admin', async ({ query }) => {
     body.innerHTML = `
       <div class="grid">${[['users', 'Users'], ['topics', 'Topics'], ['discussions', 'Discussions'], ['comments', 'Comments'], ['active_sessions', 'Active sessions']].map(([k, l]) => `<div class="card stat"><b>${s[k]}</b>${l}</div>`).join('')}</div>
       <div class="card" style="margin-top:1.2rem"><h2>Monitoring</h2>
-        <p class="muted">Sentry is ${state.config.sentryDsn ? '<b>enabled</b>' : 'not configured (set SENTRY_DSN in Vercel)'}. Use these buttons to send test errors.</p>
+        <p class="muted">Sentry is ${state.config.sentryDsn ? '<b>enabled</b>' : 'not configured (set SENTRY_DSN in Netlify)'}. Use these buttons to send test errors.</p>
         <div class="row"><button class="ghost" id="sentry-api">Trigger server error</button><button class="ghost" id="sentry-ui">Trigger browser error</button></div></div>`;
     $('#sentry-api').addEventListener('click', async () => { try { await api('/admin/sentry-test', { method: 'POST' }); } catch (e) { toast(`Server error sent: ${e.message}`, 'error'); } });
     $('#sentry-ui').addEventListener('click', () => { setTimeout(() => { throw new Error('Sentry browser test error from Admin panel'); }); toast('Browser error thrown.', 'error'); });

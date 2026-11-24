@@ -10,15 +10,18 @@ import { sendMail } from './mailer.js';
 import { renderPlate, PLATES } from './media.js';
 import { THEMES, THEME_SLUGS } from './themes.js';
 
+const RUNTIME_ENV = process.env.CONTEXT || process.env.VERCEL_ENV
+  || (process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME ? 'production' : 'development');
+
 // Sentry (extra points). Loaded lazily so the app works without it.
 // Sample every trace locally, 10% in production.
 const sentryReady = process.env.SENTRY_DSN
   ? import('@sentry/node')
       .then((Sentry) => {
-        const production = Boolean(process.env.NETLIFY || process.env.VERCEL || process.env.CONTEXT);
+        const production = Boolean(process.env.NETLIFY || process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
         Sentry.init({
           dsn: process.env.SENTRY_DSN,
-          environment: process.env.CONTEXT || process.env.VERCEL_ENV || 'development',
+          environment: RUNTIME_ENV,
           release: process.env.COMMIT_REF || process.env.VERCEL_GIT_COMMIT_SHA || undefined,
           tracesSampleRate: production ? 0.1 : 1.0,
           enableLogs: true,
@@ -82,7 +85,7 @@ api.get('/config', async (req, res) => {
     registrationOpen: s.registration_open === 'true',
     maxDevices: MAX_DEVICES,
     sentryDsn: process.env.SENTRY_DSN_FRONTEND || process.env.SENTRY_DSN || null,
-    environment: process.env.CONTEXT || process.env.VERCEL_ENV || 'development',
+    environment: RUNTIME_ENV,
   });
 });
 
