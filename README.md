@@ -8,13 +8,13 @@ Research website for **20 civilizations and states** whose whole interface (pale
 
 ## Demo accounts (one per role)
 
-| Role | Email | Password |
-|---|---|---|
-| Standard User | `user@atlas.demo` | `Reader#2026!` |
-| Investigator | `investigator@atlas.demo` | `Research#2026!` |
-| Admin | `admin@atlas.demo` | `Admin#2026!` |
+| Role | Email |
+|---|---|
+| Standard User | `user@atlas.demo` |
+| Investigator | `investigator@atlas.demo` |
+| Admin | `admin@atlas.demo` |
 
-(The login page has buttons that fill these in, under "Demo accounts".)
+Passwords are **not** published: they are set with the `ADMIN_PASSWORD`, `INVESTIGATOR_PASSWORD` and `USER_PASSWORD` environment variables and shared privately with the teacher.
 
 ## Tech stack
 
@@ -86,7 +86,7 @@ npm test           # 60 automated checks covering A1–A5
 1. Push this folder to a GitHub repository.
 2. Create a free Postgres database at **neon.tech** and copy its connection string (`postgresql://...`).
 3. Netlify → **Add new site → Import an existing project → GitHub** → pick the repo. `netlify.toml` already sets publish dir `public`, functions dir and the `/api/*` redirect, so leave the build settings as they are.
-4. **Site configuration → Environment variables**: add `DATABASE_URL` (Neon string) and `JWT_SECRET` (random string, 32+ characters). Optional: `SENTRY_DSN`, `RESEND_API_KEY`.
+4. **Site configuration → Environment variables**: add `DATABASE_URL` (Neon string), `JWT_SECRET` (random string, 32+ characters) and `ADMIN_PASSWORD`, `INVESTIGATOR_PASSWORD`, `USER_PASSWORD` (strong passwords for the demo accounts; they are only used the first time the database is filled). Optional: `SENTRY_DSN`, `RESEND_API_KEY`.
 5. **Deploys → Trigger deploy → Deploy site**. Tables, the 20 topics and demo accounts are created on the first request.
 6. Check `https://your-site.netlify.app/api/health` → `{"ok":true,"db":"postgres"}`.
 

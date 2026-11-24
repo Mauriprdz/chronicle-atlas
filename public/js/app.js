@@ -465,16 +465,8 @@ route('/login', async ({ query }) => {
       <label for="l-pw">Password</label><input id="l-pw" name="password" type="password" autocomplete="current-password" required>
       <p class="row" style="margin-top:1.2rem"><button>Log in</button><span class="spacer"></span><a href="#/forgot">Forgot password?</a></p>
       <p class="muted small">No account? <a href="#/register">Register</a>. Each account can be active on at most ${state.config.maxDevices} devices at once.</p>
-      <details class="small"><summary>Demo accounts (one per role)</summary>
-        <div class="row" style="margin-top:.6rem">
-          <button type="button" class="sm ghost demo" data-e="user@atlas.demo" data-p="Reader#2026!">Standard User</button>
-          <button type="button" class="sm ghost demo" data-e="investigator@atlas.demo" data-p="Research#2026!">Investigator</button>
-          <button type="button" class="sm ghost demo" data-e="admin@atlas.demo" data-p="Admin#2026!">Admin</button>
-        </div>
-      </details>
     </form>`;
   const form = $('#login-form');
-  $$('.demo').forEach((b) => b.addEventListener('click', () => { form.email.value = b.dataset.e; form.password.value = b.dataset.p; }));
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     formError(form, null);

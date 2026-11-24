@@ -2,6 +2,7 @@
 // - Production (Netlify/Vercel): set DATABASE_URL (Netlify DB sets NETLIFY_DATABASE_URL automatically) to a Postgres database (Neon, Supabase, Vercel Postgres...).
 // - Local development: if DATABASE_URL is missing, an embedded Postgres (PGlite) is used,
 //   stored in ./.data so you can run the project with zero setup.
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { TOPICS } from './topics-data.js';
 
@@ -149,12 +150,23 @@ async function migrateAndSeed(db) {
   }
 
   // Demo accounts (one per role) so the RBAC rubric can be tested immediately.
+  // Passwords come from environment variables so they are NOT visible in the public repo.
+  // Local development (no DATABASE_URL) uses simple defaults; production without the
+  // variables gets a random password printed once in the function logs.
   const [{ count: userCount }] = await db.query('SELECT COUNT(*)::int AS count FROM users');
   if (userCount === 0) {
+    const production = Boolean(process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL);
+    const pick = (envName, devDefault) => {
+      if (process.env[envName]) return process.env[envName];
+      if (!production) return devDefault;
+      const generated = 'Atlas#' + crypto.randomBytes(9).toString('base64url') + '9a';
+      console.warn(`[seed] ${envName} not set - generated password: ${generated}`);
+      return generated;
+    };
     const demo = [
-      ['Atlas Admin', process.env.ADMIN_EMAIL || 'admin@atlas.demo', process.env.ADMIN_PASSWORD || 'Admin#2026!', 'admin'],
-      ['Ines Investigator', 'investigator@atlas.demo', process.env.DEMO_PASSWORD || 'Research#2026!', 'investigator'],
-      ['Sam Standard', 'user@atlas.demo', process.env.DEMO_PASSWORD || 'Reader#2026!', 'user'],
+      ['Atlas Admin', process.env.ADMIN_EMAIL || 'admin@atlas.demo', pick('ADMIN_PASSWORD', 'Admin#2026!'), 'admin'],
+      ['Ines Investigator', 'investigator@atlas.demo', pick('INVESTIGATOR_PASSWORD', 'Research#2026!'), 'investigator'],
+      ['Sam Standard', 'user@atlas.demo', pick('USER_PASSWORD', 'Reader#2026!'), 'user'],
     ];
     for (const [name, email, password, role] of demo) {
       const hash = await bcrypt.hash(password, 11);
