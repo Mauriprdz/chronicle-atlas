@@ -10,15 +10,23 @@ import { sendMail } from './mailer.js';
 import { renderPlate, PLATES } from './media.js';
 import { THEMES, THEME_SLUGS } from './themes.js';
 
-let Sentry = null;
-if (process.env.SENTRY_DSN) {
-  import('@sentry/node')
-    .then((m) => {
-      m.init({ dsn: process.env.SENTRY_DSN, environment: process.env.CONTEXT || process.env.VERCEL_ENV || 'development', tracesSampleRate: 0.2 });
-      Sentry = m;
-    })
-    .catch((err) => console.error('[sentry] could not initialise', err));
-}
+// Sentry (extra points). Loaded lazily so the app works without it.
+// Sample every trace locally, 10% in production.
+const sentryReady = process.env.SENTRY_DSN
+  ? import('@sentry/node')
+      .then((Sentry) => {
+        const production = Boolean(process.env.NETLIFY || process.env.VERCEL || process.env.CONTEXT);
+        Sentry.init({
+          dsn: process.env.SENTRY_DSN,
+          environment: process.env.CONTEXT || process.env.VERCEL_ENV || 'development',
+          release: process.env.COMMIT_REF || process.env.VERCEL_GIT_COMMIT_SHA || undefined,
+          tracesSampleRate: production ? 0.1 : 1.0,
+          enableLogs: true,
+        });
+        return Sentry;
+      })
+      .catch((err) => { console.error('[sentry] could not initialise', err); return null; })
+  : Promise.resolve(null);
 
 const RESET_TTL_MINUTES = 20;
 const BCRYPT_ROUNDS = 11;
@@ -627,9 +635,17 @@ api.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
 app.use('/api', api);
 
-app.use((err, req, res, next) => {
-  if (Sentry) Sentry.captureException(err);
+app.use(async (err, req, res, next) => {
   console.error(err);
+  const Sentry = await sentryReady;
+  if (Sentry) {
+    Sentry.withScope((scope) => {
+      scope.setTag('route', `${req.method} ${req.path}`);
+      Sentry.captureException(err);
+    });
+    // Serverless functions freeze after responding: send the event first.
+    await Sentry.flush(2000).catch(() => {});
+  }
   if (res.headersSent) return next(err);
   const status = err.status || err.statusCode || 500;
   res.status(status).json({ error: status === 500 ? 'Internal server error' : err.message });
