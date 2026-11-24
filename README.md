@@ -2,9 +2,14 @@
 
 Research website for **20 civilizations and states** whose whole interface (palette, typography, background motifs) changes to match the topic being explored. Single deployment: frontend + API + auth + RBAC + themes in one repo and one URL.
 
-**Team:** Mauricio Alejandro Prieto Rodríguez · _Teammate 2_ · _Teammate 3_
+**Team:**
+- Mauricio Alejandro Prieto Rodríguez
+- Juan Pablo Olivares Juárez
+- Jesús David Olivares Juárez
+
 **Group:** IDGSBIS81N · UTCH BIS
-**Live URL:** _https://your-site.netlify.app_
+
+**Live URL:** https://chronicle-atlas-utch.netlify.app
 
 ## Demo accounts (one per role)
 
