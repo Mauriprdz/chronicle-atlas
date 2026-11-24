@@ -43,6 +43,28 @@ app.use((req, res, next) => {
   if (req.url.startsWith('/.netlify/functions/api')) req.url = '/api' + req.url.slice('/.netlify/functions/api'.length);
   next();
 });
+// Sentry tunnel: browser events are posted to our own domain and forwarded to Sentry,
+// so ad/tracker blockers don't drop them. Only our own project DSN is accepted.
+app.post('/api/monitoring', express.raw({ type: () => true, limit: '1mb' }), async (req, res) => {
+  try {
+    const dsn = process.env.SENTRY_DSN_FRONTEND || process.env.SENTRY_DSN;
+    if (!dsn) return res.status(404).end();
+    const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(typeof req.body === 'string' ? req.body : '');
+    const header = JSON.parse(raw.toString('utf8').split('\n')[0] || '{}');
+    const allowed = new URL(dsn);
+    const incoming = new URL(header.dsn);
+    const projectId = allowed.pathname.replace(/\//g, '');
+    if (incoming.host !== allowed.host || incoming.pathname.replace(/\//g, '') !== projectId) return res.status(400).end();
+    const upstream = await fetch(`https://${allowed.host}/api/${projectId}/envelope/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-sentry-envelope' },
+      body: raw,
+    });
+    res.status(upstream.status).end();
+  } catch {
+    res.status(400).end();
+  }
+});
 app.use(express.json({ limit: '100kb' }));
 // Fallback for serverless adapters that hand over the raw body as a Buffer/string
 app.use((req, res, next) => {

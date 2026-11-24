@@ -917,10 +917,9 @@ async function loadConfig() {
 
 function initSentry(dsn) {
   const s = document.createElement('script');
-  s.src = 'https://browser.sentry-cdn.com/11.17.0/bundle.min.js';
-  s.crossOrigin = 'anonymous';
+  s.src = '/js/vendor/sentry-11.17.0.min.js'; // self-hosted copy of the official Sentry CDN bundle
   s.onload = () => {
-    window.Sentry?.init({ dsn, environment: state.config.environment });
+    window.Sentry?.init({ dsn, environment: state.config.environment, tunnel: '/api/monitoring' });
     if (state.user) window.Sentry?.setUser({ id: String(state.user.id), role: state.user.role });
   };
   document.head.append(s);
